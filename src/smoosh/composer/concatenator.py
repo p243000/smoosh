@@ -11,8 +11,6 @@ from ..utils.logger import logger
 class CompositionError(GenerationError):
     """Raised when composition fails."""
 
-    pass
-
 
 def concatenate_files(
     repo_info: RepositoryInfo, mode: str, config: ConfigDict

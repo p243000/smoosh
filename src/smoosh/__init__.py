@@ -21,22 +21,14 @@ ConfigDict = Dict[str, Any]
 class SmooshError(Exception):
     """Base exception class for smoosh."""
 
-    pass
-
 
 class ConfigurationError(SmooshError):
     """Raised when there's an error in configuration."""
-
-    pass
 
 
 class AnalysisError(SmooshError):
     """Raised when analysis fails."""
 
-    pass
-
 
 class GenerationError(SmooshError):
     """Base class for composition errors."""
-
-    pass

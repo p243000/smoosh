@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Set, Union
 
+from .. import AnalysisError
 from ..custom_types import FileInfo
 from ..utils.config import ConfigDict
 from ..utils.file_utils import (
@@ -129,7 +130,7 @@ def analyze_repository(
             total_files_count=len(files),
         )
 
-    except Exception as e:
+    except OSError as e:
         raise AnalysisError(f"Failed to analyze repository: {e}") from e
 
 
@@ -145,12 +146,6 @@ def load_file_contents(repo_info: RepositoryInfo) -> None:
         try:
             with open(file_info.path, encoding="utf-8") as f:
                 file_info.content = f.read()
-        except Exception as e:
-            logger.warning(f"Error reading file {file_info.path}: {e}")
+        except (OSError, UnicodeDecodeError) as e:
+            logger.warning("Error reading file %s: %s", file_info.path, e)
             file_info.content = None
-
-
-class AnalysisError(Exception):
-    """Raised when repository analysis fails."""
-
-    pass

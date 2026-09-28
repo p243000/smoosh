@@ -11,8 +11,6 @@ from .. import GenerationError
 class FormattingError(GenerationError):
     """Raised when formatting fails."""
 
-    pass
-
 
 def format_output(content: str, stats: Dict[str, Any], format_type: str = "text") -> str:
     """Format the composed content in the specified style.
