@@ -1,0 +1,45 @@
+************* Module smoosh
+src/smoosh/__init__.py:24:4: W0107: Unnecessary pass statement (unnecessary-pass)
+src/smoosh/__init__.py:30:4: W0107: Unnecessary pass statement (unnecessary-pass)
+src/smoosh/__init__.py:36:4: W0107: Unnecessary pass statement (unnecessary-pass)
+src/smoosh/__init__.py:42:4: W0107: Unnecessary pass statement (unnecessary-pass)
+************* Module smoosh.cli
+src/smoosh/cli.py:87:16: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+src/smoosh/cli.py:106:4: E1120: No value for argument 'target' in function call (no-value-for-parameter)
+src/smoosh/cli.py:106:4: E1120: No value for argument 'mode' in function call (no-value-for-parameter)
+src/smoosh/cli.py:106:4: E1120: No value for argument 'output' in function call (no-value-for-parameter)
+src/smoosh/cli.py:106:4: E1120: No value for argument 'force_cat' in function call (no-value-for-parameter)
+************* Module smoosh.utils.path_resolver
+src/smoosh/utils/path_resolver.py:69:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+************* Module smoosh.utils.logger
+src/smoosh/utils/logger.py:26:4: W0621: Redefining name 'logger' from outer scope (line 55) (redefined-outer-name)
+src/smoosh/utils/logger.py:48:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src/smoosh/utils/logger.py:49:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+************* Module smoosh.utils.config
+src/smoosh/utils/config.py:114:17: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+src/smoosh/utils/config.py:3:0: W0611: Unused import os (unused-import)
+************* Module smoosh.composer.concatenator
+src/smoosh/composer/concatenator.py:147:5: W0511: TODO: Implement fold mode composition (fixme)
+src/smoosh/composer/concatenator.py:163:5: W0511: TODO: Implement smoosh mode composition (fixme)
+src/smoosh/composer/concatenator.py:14:4: W0107: Unnecessary pass statement (unnecessary-pass)
+src/smoosh/composer/concatenator.py:52:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src/smoosh/composer/concatenator.py:102:4: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+************* Module smoosh.composer.formatter
+src/smoosh/composer/formatter.py:14:4: W0107: Unnecessary pass statement (unnecessary-pass)
+************* Module smoosh.analyzer.tree
+src/smoosh/analyzer/tree.py:3:0: W0611: Unused import os (unused-import)
+************* Module smoosh.analyzer.repository
+src/smoosh/analyzer/repository.py:35:8: C0415: Import outside toplevel (tree.generate_tree) (import-outside-toplevel)
+src/smoosh/analyzer/repository.py:40:0: R0914: Too many local variables (19/15) (too-many-locals)
+src/smoosh/analyzer/repository.py:69:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src/smoosh/analyzer/repository.py:72:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src/smoosh/analyzer/repository.py:117:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src/smoosh/analyzer/repository.py:118:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src/smoosh/analyzer/repository.py:148:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src/smoosh/analyzer/repository.py:149:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src/smoosh/analyzer/repository.py:156:4: W0107: Unnecessary pass statement (unnecessary-pass)
+src/smoosh/analyzer/repository.py:3:0: W0611: Unused import os (unused-import)
+
+------------------------------------------------------------------
+Your code has been rated at 8.98/10 (previous run: 8.98/10, +0.00)
+
