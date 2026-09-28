@@ -15,9 +15,10 @@ from ..utils.file_utils import (
     walk_repository,
 )
 from ..utils.logger import logger
+from .tree import generate_tree
 
 # Define PathLike type consistently with other modules
-PathLike = Union[str, "os.PathLike[str]"]
+PathLike = Union[str, os.PathLike[str]]
 
 
 @dataclass
@@ -33,8 +34,6 @@ class RepositoryInfo:
 
     def get_tree_representation(self) -> str:
         """Compose a tree-style representation of the repository structure."""
-        from .tree import generate_tree
-
         return generate_tree(str(self.root), self.files)
 
 

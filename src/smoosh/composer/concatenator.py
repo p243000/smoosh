@@ -48,8 +48,9 @@ def concatenate_files(
         max_tokens = config["output"].get("max_tokens")
         if max_tokens and len(full_composition.split()) > max_tokens:
             logger.warning(
-                f"Composition exceeds max_tokens ({max_tokens}). "
-                "Consider using a different mode or adjusting the limit."
+                "Composition exceeds max_tokens (%s). "
+                "Consider using a different mode or adjusting the limit.",
+                max_tokens,
             )
 
         return full_composition, stats
@@ -97,14 +98,18 @@ def compose_content(repo_info: RepositoryInfo, mode: str) -> str:
         Composed content string
 
     """
-    if mode == "cat":
-        return compose_cat_mode(repo_info)
-    elif mode == "fold":
-        return compose_fold_mode(repo_info)
-    elif mode == "smoosh":
-        return compose_smoosh_mode(repo_info)
-    else:
-        raise CompositionError(f"Unknown composition mode: {mode}")
+    composers = {
+        "cat": compose_cat_mode,
+        "fold": compose_fold_mode,
+        "smoosh": compose_smoosh_mode,
+    }
+
+    try:
+        composer = composers[mode]
+    except KeyError as e:
+        raise CompositionError(f"Unknown composition mode: {mode}") from e
+
+    return composer(repo_info)
 
 
 def compose_cat_mode(repo_info: RepositoryInfo) -> str:

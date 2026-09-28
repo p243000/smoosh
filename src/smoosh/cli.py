@@ -84,7 +84,7 @@ def main(target: str, mode: str, output: Optional[str], force_cat: bool) -> None
 
             # Handle output
             if output_path:
-                output_path.write_text(result)
+                output_path.write_text(result, encoding="utf-8")
                 console.print(f"✨ Output written to: [bold blue]{output_path}[/bold blue]")
             else:
                 pyperclip.copy(result)
@@ -103,4 +103,6 @@ def main(target: str, mode: str, output: Optional[str], force_cat: bool) -> None
 
 
 if __name__ == "__main__":
-    main()
+    # Click injects the arguments declared by the decorators above, so Pylint
+    # cannot see any values being passed and reports no-value-for-parameter.
+    main()  # pylint: disable=no-value-for-parameter

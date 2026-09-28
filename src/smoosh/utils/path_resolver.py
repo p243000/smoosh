@@ -66,7 +66,7 @@ def resolve_path(path_or_name: str) -> Path:
     # Try as package name
     package_path = find_package_path(path_or_name)
     if package_path:
-        logger.info(f"Found package '{path_or_name}' at {package_path}")
+        logger.info("Found package '%s' at %s", path_or_name, package_path)
         return package_path
 
     raise FileNotFoundError(

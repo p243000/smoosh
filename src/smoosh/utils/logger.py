@@ -23,12 +23,12 @@ def setup_logger(
 
     """
     # Create logger
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
+    log = logging.getLogger(name)
+    log.setLevel(level)
 
     # Remove any existing handlers
-    for handler in logger.handlers[:]:
-        logger.removeHandler(handler)
+    for handler in log.handlers[:]:
+        log.removeHandler(handler)
 
     # Create formatters
     console_formatter = logging.Formatter("%(levelname)s: %(message)s")
@@ -37,18 +37,18 @@ def setup_logger(
     # Console handler
     console_handler = logging.StreamHandler(sys.stderr)
     console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
+    log.addHandler(console_handler)
 
     # File handler if log_file is specified
     if log_file is not None:
         try:
             file_handler = logging.FileHandler(log_file)
             file_handler.setFormatter(file_formatter)
-            logger.addHandler(file_handler)
-        except Exception as e:
-            logger.warning(f"Failed to create log file at {log_file}: {e}")
+            log.addHandler(file_handler)
+        except OSError as e:
+            log.warning("Failed to create log file at %s: %s", log_file, e)
 
-    return logger
+    return log
 
 
 # Create default logger instance

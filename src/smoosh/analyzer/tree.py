@@ -8,7 +8,7 @@ from typing import Dict, List, Union
 from ..custom_types import FileInfo
 
 # Define PathLike type consistently with file_utils
-PathLike = Union[str, "os.PathLike[str]"]
+PathLike = Union[str, os.PathLike[str]]
 
 
 @dataclass
