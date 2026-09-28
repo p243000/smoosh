@@ -1,0 +1,825 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+body { font-family: Georgia, 'Times New Roman', serif; font-size: 11pt; line-height: 1.45; margin: 2cm; color: #111; }
+h1 { font-size: 20pt; } h2 { font-size: 15pt; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+h3 { font-size: 12.5pt; }
+code, pre { font-family: 'DejaVu Sans Mono', monospace; font-size: 9pt; background: #f6f6f6; }
+pre { padding: 8px; border: 1px solid #ddd; overflow-x: auto; white-space: pre-wrap; }
+table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+th, td { border: 1px solid #bbb; padding: 4px 7px; text-align: left; vertical-align: top; font-size: 10pt; }
+th { background: #eee; }
+</style></head><body><h1 id="assignment-1-deliverable-2">Assignment 1 — Deliverable 2</h1>
+<h2 id="static-code-quality-analysis-of-smoosh">Static Code Quality Analysis of <em>smoosh</em></h2>
+<p><strong>Course:</strong> Software Quality Engineering
+<strong>Student:</strong> Pir Ahmed Shah / 24P-3000
+<strong>Instructor:</strong> Sara Rehmat
+<strong>Repository:</strong> https://github.com/j-mcnamara/smoosh
+<strong>Analysis branch:</strong> <code>static-analysis-assignment</code>
+<strong>Tool:</strong> Pylint 4.0.9 (Python 3.12.3)</p>
+<hr />
+<h2 id="1-project-description-and-code-statistics">1. Project description and code statistics</h2>
+<p><strong>Project name:</strong> smoosh — <em>Software Module Outline &amp; Organization Summary Helper</em></p>
+<p><strong>Purpose:</strong> <code>smoosh</code> is a command-line tool that scans a repository or
+directory and produces a compact, LLM-friendly plain-text summary of the
+codebase (file tree + concatenated source). It uses <code>click</code> for the CLI,
+<code>rich</code> for terminal output, <code>PyYAML</code> for configuration, <code>chardet</code> for text
+detection and <code>pyperclip</code> for clipboard output.</p>
+<table>
+<thead>
+<tr>
+<th>Statistic</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python source files (<code>src/smoosh/</code>)</td>
+<td>15</td>
+</tr>
+<tr>
+<td>Python LOC in <code>src/smoosh/</code></td>
+<td>1,376</td>
+</tr>
+<tr>
+<td>Test files</td>
+<td>2 (<code>tests/test_cli.py</code>, <code>tests/test_core.py</code>)</td>
+</tr>
+<tr>
+<td>Existing automated tests</td>
+<td>Yes (Pytest)</td>
+</tr>
+<tr>
+<td>License</td>
+<td>MIT</td>
+</tr>
+<tr>
+<td>Dependencies</td>
+<td>Self-contained; no database, cloud service, GPU or paid API</td>
+</tr>
+</tbody>
+</table>
+<p>The package is organised into three collaborating subsystems plus the CLI:</p>
+<ul>
+<li><code>analyzer/</code> — walks the repository and builds the file/tree model.</li>
+<li><code>composer/</code> — concatenates and formats the collected content.</li>
+<li><code>utils/</code> — configuration, logging, path and file helpers.</li>
+<li><code>cli.py</code> — the <code>click</code> entry point that wires everything together.</li>
+</ul>
+<h2 id="2-baseline">2. Baseline</h2>
+<p>A separate analysis branch was created and an explicit marker commit was made
+before any modification:</p>
+<pre><code class="language-bash">git switch -c static-analysis-assignment
+git commit --allow-empty -m &quot;Baseline before static analysis&quot;
+git tag baseline-before-static-analysis
+</code></pre>
+<p>The original version is preserved in the upstream history
+(commit <code>9ea6335</code>, tag <code>0.1.4</code>). Baseline evidence, including the full Pylint
+output, is committed in <code>reports/pylint_baseline.txt</code>.</p>
+<p><strong>Analysis scope.</strong> Pylint is run over the application package <code>src/smoosh</code>.
+The <code>tests/</code> directory is verification code and the bundled
+<code>src/smoosh/pyperclip.pyi</code> is a third-party API stub, so neither is part of the
+code-quality scope. This scope also makes the baseline exactly match the
+Deliverable 1 figure (8.98/10).</p>
+<h2 id="3-initial-static-analysis">3. Initial static analysis</h2>
+<p>Command:</p>
+<pre><code class="language-bash">pylint src/smoosh
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Baseline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pylint score</td>
+<td><strong>8.98 / 10</strong></td>
+</tr>
+<tr>
+<td>Total issues</td>
+<td><strong>32</strong></td>
+</tr>
+<tr>
+<td>Convention (C)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Error (E)</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Refactoring (R)</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Warning (W)</td>
+<td>25</td>
+</tr>
+</tbody>
+</table>
+<p>Files with the most issues:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Issues</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>src/smoosh/analyzer/repository.py</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>src/smoosh/composer/concatenator.py</code></td>
+<td>5</td>
+</tr>
+<tr>
+<td><code>src/smoosh/cli.py</code></td>
+<td>5</td>
+</tr>
+<tr>
+<td><code>src/smoosh/__init__.py</code></td>
+<td>4</td>
+</tr>
+<tr>
+<td><code>src/smoosh/utils/logger.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>src/smoosh/utils/config.py</code></td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>path_resolver.py</code>, <code>formatter.py</code>, <code>tree.py</code></td>
+<td>1 each</td>
+</tr>
+</tbody>
+</table>
+<p>The complete raw output is reproduced in <strong>Appendix A</strong> and stored in
+<code>reports/pylint_baseline.txt</code>.</p>
+<h2 id="4-classification-of-findings">4. Classification of findings</h2>
+<p>The findings were grouped into meaningful software-quality concerns rather
+than Pylint's own letter codes.</p>
+<table>
+<thead>
+<tr>
+<th>Quality concern</th>
+<th>Pylint messages</th>
+<th>Count</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Error handling</td>
+<td><code>broad-exception-caught</code> (W0718)</td>
+<td>3</td>
+<td>Catching <code>Exception</code> hides programming errors and makes failures hard to diagnose.</td>
+</tr>
+<tr>
+<td>Coding convention / performance</td>
+<td><code>logging-fstring-interpolation</code> (W1203)</td>
+<td>7</td>
+<td>f-strings are formatted even when the log level is disabled, wasting work and obscuring log structure.</td>
+</tr>
+<tr>
+<td>Unused / dead code</td>
+<td><code>unused-import</code> (W0611), <code>unnecessary-pass</code> (W0107)</td>
+<td>10</td>
+<td>Dead code increases reading cost and can mislead maintainers.</td>
+</tr>
+<tr>
+<td>Possible defect</td>
+<td><code>no-value-for-parameter</code> (E1120)</td>
+<td>4</td>
+<td>Reported as missing arguments; here a known decorator false positive.</td>
+</tr>
+<tr>
+<td>Complexity</td>
+<td><code>too-many-locals</code> (R0914)</td>
+<td>1</td>
+<td>A function with 19 locals is doing too much and is hard to test.</td>
+</tr>
+<tr>
+<td>Maintainability / coupling</td>
+<td><code>no-else-return</code> (R1705), <code>import-outside-toplevel</code> (C0415)</td>
+<td>2</td>
+<td>Unnecessary branching and hidden imports reduce clarity and structure.</td>
+</tr>
+<tr>
+<td>Maintainability / reliability</td>
+<td><code>unspecified-encoding</code> (W1514)</td>
+<td>2</td>
+<td>Locale-dependent file I/O is a portability and data-integrity risk.</td>
+</tr>
+<tr>
+<td>Naming / readability</td>
+<td><code>redefined-outer-name</code> (W0621)</td>
+<td>1</td>
+<td>Shadowing the module logger is a readability/behaviour trap.</td>
+</tr>
+<tr>
+<td>Documentation / debt</td>
+<td><code>fixme</code> (W0511)</td>
+<td>2</td>
+<td>Tracked, intentional technical debt for the unfinished fold/smoosh modes.</td>
+</tr>
+</tbody>
+</table>
+<p>The 25 warnings are dominated by low-risk but real hygiene problems
+(logging style, unused imports, redundant <code>pass</code>). Only 4 are "errors", and all
+4 are the same Click false positive. The single genuinely structural finding is
+the over-long <code>analyze_repository()</code>.</p>
+<h2 id="5-detailed-investigation-of-selected-findings">5. Detailed investigation of selected findings</h2>
+<p>Twelve findings are analysed below, covering seven different quality concerns.
+For each: <strong>(A)</strong> tool finding, <strong>(B)</strong> original code, <strong>(C)</strong> independent
+explanation, <strong>(D)</strong> quality impact, and the <strong>Part 6 verdict</strong>
+(A = should fix, B = context dependent, C = acceptable / false positive).</p>
+<hr />
+<h3 id="finding-1-broad-exception-in-the-logger">Finding 1 — Broad exception in the logger</h3>
+<p><strong>A.</strong> <code>src/smoosh/utils/logger.py:48</code> — <code>W0718 (broad-exception-caught)</code></p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">        try:
+            file_handler = logging.FileHandler(log_file)
+            file_handler.setFormatter(file_formatter)
+            logger.addHandler(file_handler)
+        except Exception as e:
+            logger.warning(f&quot;Failed to create log file at {log_file}: {e}&quot;)
+</code></pre>
+<p><strong>C. Explanation.</strong> <code>logging.FileHandler</code> can realistically fail with <code>OSError</code>
+(permissions, missing directory, bad path). Catching <code>Exception</code> additionally
+swallows programming errors such as a <code>TypeError</code> from a malformed
+<code>log_file</code>, reporting them as "failed to create log file" and continuing.</p>
+<p><strong>D. Impact.</strong> Reliability and diagnosability: real defects are converted into
+a soft warning and lost. Narrowing to <code>OSError</code> makes the intent explicit.</p>
+<p><strong>Verdict:</strong> <strong>A — should be fixed.</strong></p>
+<hr />
+<h3 id="finding-2-broad-exception-when-reading-files">Finding 2 — Broad exception when reading files</h3>
+<p><strong>A.</strong> <code>src/smoosh/analyzer/repository.py:148</code> — <code>W0718 (broad-exception-caught)</code></p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">        except Exception as e:
+            logger.warning(f&quot;Error reading file {file_info.path}: {e}&quot;)
+            file_info.content = None
+</code></pre>
+<p><strong>C. Explanation.</strong> Reading a file can fail with <code>OSError</code> (I/O, permissions)
+or <code>UnicodeDecodeError</code> (bad encoding). Catching everything also hides bugs in
+the surrounding code and silently drops content.</p>
+<p><strong>D. Impact.</strong> Reliability and maintainability: failures become invisible and
+the reason for missing content is unclear.</p>
+<p><strong>Verdict:</strong> <strong>A — should be fixed.</strong></p>
+<hr />
+<h3 id="finding-3-f-string-in-logging">Finding 3 — f-string in logging</h3>
+<p><strong>A.</strong> <code>src/smoosh/analyzer/repository.py:69</code> — <code>W1203 (logging-fstring-interpolation)</code>
+(7 occurrences in total: <code>repository.py:69,72,118,149</code>, <code>logger.py:49</code>,
+<code>concatenator.py:52</code>, <code>path_resolver.py:69</code>)</p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">        logger.info(f&quot;Git repository root detected at {input_path}&quot;)
+</code></pre>
+<p><strong>C. Explanation.</strong> The f-string is evaluated eagerly, before the logger checks
+whether the level is enabled. The logging API is designed to receive a format
+string plus arguments and perform the interpolation lazily.</p>
+<p><strong>D. Impact.</strong> Maintainability and a minor performance cost. It also separates
+log data from log message, which is important for structured logging.</p>
+<p><strong>Verdict:</strong> <strong>A — should be fixed</strong> (mechanical and safe).</p>
+<hr />
+<h3 id="finding-4-unused-import-in-config">Finding 4 — Unused import in config</h3>
+<p><strong>A.</strong> <code>src/smoosh/utils/config.py:3</code> — <code>W0611 (unused-import)</code></p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">import os
+</code></pre>
+<p><strong>C. Explanation.</strong> <code>os</code> is imported but never used; the only reference is
+<code>PathLike = Union[str, "os.PathLike[str]"]</code>, a string annotation that is never
+evaluated. The alias itself is also unused in this module.</p>
+<p><strong>D. Impact.</strong> Readability: the reader must check whether <code>os</code> matters.</p>
+<p><strong>Verdict:</strong> <strong>A — should be fixed.</strong></p>
+<hr />
+<h3 id="finding-5-unused-import-in-tree">Finding 5 — Unused import in tree</h3>
+<p><strong>A.</strong> <code>src/smoosh/analyzer/tree.py:3</code> — <code>W0611 (unused-import)</code></p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">import os
+...
+PathLike = Union[str, &quot;os.PathLike[str]&quot;]
+</code></pre>
+<p><strong>C. Explanation.</strong> As above, the import is only "used" inside a quoted
+forward-reference, so at runtime the name is never touched. The correct choice
+is either to use <code>os.PathLike</code> directly (unquoted) or to drop the import.</p>
+<p><strong>D. Impact.</strong> Readability and a small amount of confusion about typing.</p>
+<p><strong>Verdict:</strong> <strong>A — should be fixed.</strong></p>
+<hr />
+<h3 id="finding-6-redundant-pass-statements">Finding 6 — Redundant <code>pass</code> statements</h3>
+<p><strong>A.</strong> <code>src/smoosh/__init__.py:24,30,36,42</code> — <code>W0107 (unnecessary-pass)</code>
+(also <code>concatenator.py:14</code>, <code>formatter.py:14</code>, <code>repository.py:156</code>)</p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">class SmooshError(Exception):
+    &quot;&quot;&quot;Base exception class for smoosh.&quot;&quot;&quot;
+
+    pass
+</code></pre>
+<p><strong>C. Explanation.</strong> A class whose only body is a docstring already has a valid
+body; <code>pass</code> is redundant. The same applies to <code>CompositionError</code> and
+<code>FormattingError</code>.</p>
+<p><strong>D. Impact.</strong> Dead code / readability — small, but it adds noise across the
+exception hierarchy.</p>
+<p><strong>Verdict:</strong> <strong>A — should be fixed.</strong></p>
+<hr />
+<h3 id="finding-7-too-many-locals">Finding 7 — Too many locals</h3>
+<p><strong>A.</strong> <code>src/smoosh/analyzer/repository.py:40</code> — <code>R0914 (too-many-locals, 19/15)</code></p>
+<p><strong>B. Original code (abridged)</strong></p>
+<pre><code class="language-python">def analyze_repository(path, config, force_cat=False):
+    input_path = Path(str(path))
+    git_root = find_git_root(input_path)
+    is_git_root = bool(git_root and git_root == input_path)
+    root_path = input_path
+    if is_git_root and git_root:
+        logger.info(...)
+        root_path = git_root
+    else:
+        logger.info(...)
+    try:
+        gitignore_patterns = set()
+        if config[&quot;gitignore&quot;][&quot;respect&quot;] and not force_cat:
+            gitignore_root = git_root if git_root else root_path
+            gitignore_patterns = get_gitignore_patterns(str(gitignore_root))
+        gitignore_patterns.add(&quot;.git/&quot;)
+        max_size_mb = ...
+        files, total_size_mb, python_files_count = [], 0.0, 0
+        for file_path in walk_repository(...):
+            ...
+</code></pre>
+<p><strong>C. Explanation.</strong> One function resolves the root, builds ignore patterns,
+applies size limits, collects file records and aggregates statistics. Each step
+needs several locals, pushing the count to 19. The function mixes orchestration
+with detail, so it is difficult to unit-test the pieces.</p>
+<p><strong>D. Impact.</strong> Testability and maintainability: the function is hard to read
+and any single change risks the others. Decomposing improves cohesion.</p>
+<p><strong>Verdict:</strong> <strong>A — should be fixed</strong> (decompose rather than raise the limit).</p>
+<hr />
+<h3 id="finding-8-import-inside-the-function">Finding 8 — Import inside the function</h3>
+<p><strong>A.</strong> <code>src/smoosh/analyzer/repository.py:35</code> — <code>C0415 (import-outside-toplevel)</code></p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">    def get_tree_representation(self) -&gt; str:
+        &quot;&quot;&quot;Compose a tree-style representation of the repository structure.&quot;&quot;&quot;
+        from .tree import generate_tree
+
+        return generate_tree(str(self.root), self.files)
+</code></pre>
+<p><strong>C. Explanation.</strong> The local import suggests a circular-dependency workaround,
+but <code>tree.py</code> only depends on <code>custom_types.py</code>, so a module-level import is
+safe. Hidden imports complicate reasoning about module initialisation.</p>
+<p><strong>D. Impact.</strong> Maintainability and clarity of the dependency graph.</p>
+<p><strong>Verdict:</strong> <strong>B — context dependent.</strong> It is a legitimate pattern when a cycle
+truly exists; here it does not, so it was moved to the top. If a cycle existed,
+keeping the local import would be the correct choice.</p>
+<hr />
+<h3 id="finding-9-unnecessary-elif-after-return">Finding 9 — Unnecessary <code>elif</code> after <code>return</code></h3>
+<p><strong>A.</strong> <code>src/smoosh/composer/concatenator.py:102</code> — <code>R1705 (no-else-return)</code></p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">    if mode == &quot;cat&quot;:
+        return compose_cat_mode(repo_info)
+    elif mode == &quot;fold&quot;:
+        return compose_fold_mode(repo_info)
+    elif mode == &quot;smoosh&quot;:
+        return compose_smoosh_mode(repo_info)
+    else:
+        raise CompositionError(f&quot;Unknown composition mode: {mode}&quot;)
+</code></pre>
+<p><strong>C. Explanation.</strong> Once each branch returns, the <code>elif</code>/<code>else</code> chain adds
+indentation without adding meaning. A dispatch table expresses the same intent
+more directly and makes the set of supported modes obvious.</p>
+<p><strong>D. Impact.</strong> Readability and modifiability; adding a mode should be a
+one-line change.</p>
+<p><strong>Verdict:</strong> <strong>A — should be fixed.</strong></p>
+<hr />
+<h3 id="finding-10-missing-explicit-encoding">Finding 10 — Missing explicit encoding</h3>
+<p><strong>A.</strong> <code>src/smoosh/utils/config.py:114</code> — <code>W1514 (unspecified-encoding)</code>
+(also <code>cli.py:87</code>)</p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">            with open(config_path) as f:
+                user_config = yaml.safe_load(f)
+...
+                output_path.write_text(result)
+</code></pre>
+<p><strong>C. Explanation.</strong> With no <code>encoding=</code>, Python uses the platform's preferred
+encoding, which differs between Linux, macOS and Windows. A YAML file with
+non-ASCII characters can then fail differently per machine.</p>
+<p><strong>D. Impact.</strong> Reliability and portability; it can also cause data corruption
+on write. Explicit UTF-8 removes the ambiguity.</p>
+<p><strong>Verdict:</strong> <strong>A — should be fixed.</strong></p>
+<hr />
+<h3 id="finding-11-shadowing-the-module-logger">Finding 11 — Shadowing the module logger</h3>
+<p><strong>A.</strong> <code>src/smoosh/utils/logger.py:26</code> — <code>W0621 (redefined-outer-name)</code></p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">def setup_logger(name=&quot;smoosh&quot;, ...):
+    logger = logging.getLogger(name)     # local
+    ...
+# module level
+logger = setup_logger()
+</code></pre>
+<p><strong>C. Explanation.</strong> Inside <code>setup_logger</code> the local <code>logger</code> shadows the
+module-level <code>logger</code> defined later in the same file. It works, but a reader
+cannot tell at a glance which logger a call refers to.</p>
+<p><strong>D. Impact.</strong> Readability and maintainability; renaming the local variable
+removes the ambiguity.</p>
+<p><strong>Verdict:</strong> <strong>B — context dependent.</strong> Renaming is low-cost and worthwhile,
+but shadowing here is not a defect.</p>
+<hr />
+<h3 id="finding-12-click-no-value-for-parameter">Finding 12 — Click <code>no-value-for-parameter</code></h3>
+<p><strong>A.</strong> <code>src/smoosh/cli.py:106</code> — <code>E1120 (no-value-for-parameter)</code> ×4
+(<code>target</code>, <code>mode</code>, <code>output</code>, <code>force_cat</code>)</p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">@click.command()
+@click.argument(&quot;target&quot;, ...)
+@click.option(&quot;--mode&quot;, ...)
+def main(target, mode, output, force_cat):
+    ...
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre>
+<p><strong>C. Explanation.</strong> <code>click</code> reads the decorated signature and injects the
+arguments at runtime, but Pylint cannot see through the decorators and reports
+a call with no arguments. This is a known false positive.</p>
+<p><strong>D. Impact.</strong> None on the software; it only inflates the error count. It
+should be suppressed narrowly with an explanatory comment rather than by
+disabling the whole check.</p>
+<p><strong>Verdict:</strong> <strong>C — acceptable / false positive.</strong></p>
+<hr />
+<h3 id="finding-13-tracked-todos">Finding 13 — Tracked TODOs</h3>
+<p><strong>A.</strong> <code>src/smoosh/composer/concatenator.py:147,163</code> — <code>W0511 (fixme)</code></p>
+<p><strong>B. Original code</strong></p>
+<pre><code class="language-python">    # TODO: Implement fold mode composition
+    return compose_cat_mode(repo_info)
+</code></pre>
+<p><strong>C. Explanation.</strong> The <code>fold</code> and <code>smoosh</code> compression modes are advertised by
+the CLI but currently fall back to <code>cat</code>. The TODOs correctly mark incomplete
+work. The real issue is behavioural (the modes are placeholders), not the
+comment itself.</p>
+<p><strong>D. Impact.</strong> Documentation / honesty of the interface. Removing the TODOs
+would hide the gap.</p>
+<p><strong>Verdict:</strong> <strong>C — acceptable exception</strong> (legitimate tracked debt), though the
+placeholder behaviour should be closed before release.</p>
+<h2 id="6-manual-code-review-independent-of-pylint">6. Manual code review (independent of Pylint)</h2>
+<p>These five problems were found by reading the code; the first three were <strong>not
+reported by Pylint at all</strong>.</p>
+<h3 id="m1-duplicate-exception-class-hides-failures-not-reported-by-pylint">M1. Duplicate exception class hides failures <em>(not reported by Pylint)</em></h3>
+<p><code>src/smoosh/analyzer/repository.py</code> (old) defined its own class:</p>
+<pre><code class="language-python">class AnalysisError(Exception):
+    &quot;&quot;&quot;Raised when repository analysis fails.&quot;&quot;&quot;
+    pass
+</code></pre>
+<p>while <code>src/smoosh/__init__.py</code> defines <code>AnalysisError(SmooshError)</code>, and
+<code>cli.py</code> catches the package one:</p>
+<pre><code class="language-python">    except (ConfigurationError, AnalysisError, GenerationError) as e:
+</code></pre>
+<p>Because the two classes are unrelated, the exception raised by
+<code>analyze_repository()</code> was <strong>never caught by that handler</strong>; it fell through to
+the generic <code>except Exception</code>, printing "An unexpected error occurred!" and
+losing the specific message.</p>
+<ul>
+<li><strong>Problem:</strong> duplicate, inconsistent exception hierarchy.</li>
+<li><strong>Impact:</strong> maintainability and a real loss of error information
+  (reliability).</li>
+<li><strong>Recommendation:</strong> delete the local class and import the package-level
+  <code>AnalysisError</code>. <em>(Implemented.)</em></li>
+</ul>
+<h3 id="m2-duplicated-and-inconsistent-default-configuration-not-reported-by-pylint">M2. Duplicated and inconsistent default configuration <em>(not reported by Pylint)</em></h3>
+<pre><code class="language-python">DEFAULT_CONFIG: ConfigDict = {
+    &quot;output&quot;: {&quot;max_tokens&quot;: 5000, ...},
+    ...
+}
+
+def load_config(config_dir):
+    default_config = {
+        &quot;output&quot;: {&quot;max_tokens&quot;: 10000, ...},
+        ...
+    }
+</code></pre>
+<p>The module defines <code>DEFAULT_CONFIG</code> but <code>load_config()</code> ignores it and rebuilds
+its own defaults with a <em>different</em> <code>max_tokens</code> (10000 vs 5000). Three helper
+functions (<code>_merge_output</code>, <code>_merge_thresholds</code>, <code>_merge_gitignore</code>) were also
+dead code.</p>
+<ul>
+<li><strong>Problem:</strong> duplicated logic and a contradictory source of truth.</li>
+<li><strong>Impact:</strong> maintainability; a future edit to one default silently has no
+  effect.</li>
+<li><strong>Recommendation:</strong> single <code>DEFAULT_CONFIG</code> used by <code>load_config()</code>, remove
+  the dead helpers. <em>(Implemented.)</em></li>
+</ul>
+<h3 id="m3-inefficient-repository-walk-not-reported-by-pylint">M3. Inefficient repository walk <em>(not reported by Pylint)</em></h3>
+<pre><code class="language-python">    for path in root.rglob(&quot;*&quot;):
+        if should_ignore_path(path, root, ignore_patterns):
+            continue
+        ...
+        if not is_text_file(path):
+            continue
+        yield path
+</code></pre>
+<p><code>rglob("*")</code> descends into <strong>every</strong> subdirectory — including the <code>.git</code>
+object store, <code>.venv</code>, <code>node_modules</code>, caches — and only then filters. For each
+surviving path it may read up to 1 KB to guess the encoding. On a real
+repository this is a large amount of wasted I/O.</p>
+<ul>
+<li><strong>Problem:</strong> performance and unnecessary coupling to <code>chardet</code>.</li>
+<li><strong>Impact:</strong> performance/scalability.</li>
+<li><strong>Recommendation:</strong> prune ignored directories during traversal (e.g. use
+  <code>os.walk</code> and mutate <code>dirnames</code> in place) so ignored trees are never entered.
+  <em>Identified but deliberately left as a follow-up (see §11).</em></li>
+</ul>
+<h3 id="m4-dead-parameter-in-the-tree-formatter">M4. Dead parameter in the tree formatter</h3>
+<pre><code class="language-python">def format_tree(node, prefix=&quot;&quot;, is_last=True, include_indicators=True):
+    ...
+    line += format_tree(child_node, child_prefix, i == children_count - 1,
+                        include_indicators)
+</code></pre>
+<p><code>include_indicators</code> is threaded through the recursion but never actually used
+to change the output. Because it is passed along, Pylint's <code>unused-argument</code>
+does not fire.</p>
+<ul>
+<li><strong>Problem:</strong> misleading public API / function design.</li>
+<li><strong>Impact:</strong> readability and modifiability — callers believe they can toggle
+  indicators.</li>
+<li><strong>Recommendation:</strong> either implement the indicator output or drop the
+  parameter.</li>
+</ul>
+<h3 id="m5-treenode-misuses-dataclass">M5. <code>TreeNode</code> misuses <code>@dataclass</code></h3>
+<pre><code class="language-python">@dataclass
+class TreeNode:
+    name: str
+    is_dir: bool
+    children: Dict[str, &quot;TreeNode&quot;]
+    is_python: bool = False
+
+    def __init__(self, name, is_dir=True):
+        self.name = name
+        ...
+</code></pre>
+<p>The <code>@dataclass</code> decorator generates an <code>__init__</code> that is then immediately
+overridden by a hand-written one, so the field declarations are partly
+decorative. In addition <code>is_python</code> is set but never read anywhere.</p>
+<ul>
+<li><strong>Problem:</strong> class-design confusion and an unused attribute.</li>
+<li><strong>Impact:</strong> maintainability; the class pretends to be a dataclass but is not.</li>
+<li><strong>Recommendation:</strong> use a real dataclass with <code>field(default_factory=dict)</code>
+  and remove <code>is_python</code>, or drop <code>@dataclass</code>.</li>
+</ul>
+<h2 id="7-pylint-configuration-and-justification">7. Pylint configuration and justification</h2>
+<p>A project-specific <code>.pylintrc</code> was generated and adapted. Three (plus one
+additional) decisions are documented; the justifications matter more than the
+values themselves.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Setting</th>
+<th>Default</th>
+<th>Decision</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>ignore-patterns</code></td>
+<td><code>^\.#</code></td>
+<td><strong>Changed</strong> → <code>^\.#,.*\.pyi$</code></td>
+<td><code>src/smoosh/pyperclip.pyi</code> is a hand-written stub for the <strong>third-party</strong> <code>pyperclip</code> API. Linting it produced 29 findings about someone else's interface and distorted the score. The project's own ruff config already excludes <code>*.pyi</code>.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>max-line-length</code></td>
+<td>100</td>
+<td><strong>Retained</strong></td>
+<td>The project's <code>pyproject.toml</code> sets the ruff line length to 100. Keeping Pylint at 100 means one width is enforced by every tool.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>max-locals</code></td>
+<td>15</td>
+<td><strong>Retained</strong></td>
+<td><code>analyze_repository()</code> exceeded this. Relaxing the threshold would hide a genuine complexity problem, so the function was decomposed instead.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>no-value-for-parameter</code></td>
+<td>enabled</td>
+<td><strong>Suppressed inline</strong></td>
+<td>The 4 E1120 reports are a Click false positive. Rather than disabling the check globally (which would hide real defects), a single explanatory <code># pylint: disable</code> was placed at the call site.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-code-improvements-before-after">8. Code improvements (before / after)</h2>
+<p>Five significant improvements were made, four of them structural. Each was
+committed separately to keep the history meaningful.</p>
+<h3 id="improvement-1-unify-the-exception-hierarchy-structural">Improvement 1 — Unify the exception hierarchy <em>(structural)</em></h3>
+<p><strong>Before</strong> (<code>repository.py</code>): a private <code>AnalysisError(Exception)</code> shadowed the
+public one, so <code>cli.py</code> could not catch analysis failures.
+<strong>After:</strong> <code>from .. import AnalysisError</code>; duplicate class deleted.
+<strong>Why better:</strong> errors now propagate to the intended handler with their
+specific message. Fixes the M1 defect. Also removed redundant <code>pass</code>
+statements from the package's exception classes.</p>
+<h3 id="improvement-2-decompose-analyze_repository-structural">Improvement 2 — Decompose <code>analyze_repository()</code> <em>(structural)</em></h3>
+<p><strong>Before:</strong> a single function with 19 locals doing four jobs.
+<strong>After:</strong> <code>_resolve_root()</code>, <code>_collect_ignore_patterns()</code>,
+<code>_build_file_info()</code> and <code>_collect_files()</code>, with <code>analyze_repository()</code> as a
+short orchestrator. The per-file handler was narrowed from <code>Exception</code> to
+<code>(OSError, ValueError)</code>.
+<strong>Why better:</strong> each helper has one responsibility, is independently testable,
+and the complexity warning disappears instead of being silenced.</p>
+<h3 id="improvement-3-consolidate-configuration-structural">Improvement 3 — Consolidate configuration <em>(structural)</em></h3>
+<p><strong>Before:</strong> <code>DEFAULT_CONFIG</code> (5000) vs a rebuilt local default (10000), plus
+three unused <code>_merge_*</code> helpers.
+<strong>After:</strong> one <code>DEFAULT_CONFIG</code> used by <code>load_config()</code>; dead helpers removed;
+config read with an explicit <code>encoding="utf-8"</code>; exception narrowed to
+<code>(OSError, yaml.YAMLError)</code>.
+<strong>Why better:</strong> a single source of truth for defaults and less code to
+maintain (M2).</p>
+<h3 id="improvement-4-dispatch-table-for-composition-modes">Improvement 4 — Dispatch table for composition modes</h3>
+<p><strong>Before:</strong> an <code>if/elif/else</code> chain in <code>compose_content()</code>.
+<strong>After:</strong> a <code>composers</code> mapping looked up by mode.
+<strong>Why better:</strong> removes the <code>no-else-return</code> warning and makes adding a mode a
+one-line change.</p>
+<h3 id="improvement-5-logging-imports-and-encodings-cleanup">Improvement 5 — Logging, imports and encodings cleanup</h3>
+<p><strong>Before:</strong> 7 eager f-string log calls, unused <code>os</code> imports, a shadowed module
+logger, an unnecessary function-local import and a non-UTF-8 write.
+<strong>After:</strong> lazy <code>%</code>-style logging, imports cleaned, local logger renamed to
+<code>log</code>, <code>generate_tree</code> imported at module level, and
+<code>output_path.write_text(..., encoding="utf-8")</code>.
+<strong>Why better:</strong> lower log overhead, clearer module dependencies, portable I/O.</p>
+<h2 id="9-verification-part-10">9. Verification (Part 10)</h2>
+<p>Behaviour was verified by running the existing tests plus a new regression
+suite added in commit <code>ded64af</code> (7 new tests in <code>tests/test_core.py</code>), which
+covers the public analyzer, tree, composer and configuration APIs and an
+end-to-end CLI run.</p>
+<pre><code class="language-text">$ pytest -q
+.........                                                  [100%]
+9 passed in 0.15s
+</code></pre>
+<p>Coverage of the modified package:</p>
+<pre><code class="language-text">$ pytest --cov=smoosh -q
+TOTAL   452 stmts   94 miss   104 branch   19 partial   76%
+</code></pre>
+<p>A manual end-to-end run was also performed against a scratch directory and
+produced a correct tree + concatenated output file. The test that specifically
+guards the M1 fix is <code>test_analysis_error_is_the_package_exception</code>.</p>
+<h2 id="10-final-static-analysis-and-comparison">10. Final static analysis and comparison</h2>
+<pre><code class="language-bash">pylint src/smoosh        # after refactoring
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Before</th>
+<th>After</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pylint score</td>
+<td>8.98</td>
+<td><strong>9.96</strong></td>
+<td><strong>+0.98</strong></td>
+</tr>
+<tr>
+<td>Total findings</td>
+<td>32</td>
+<td><strong>2</strong></td>
+<td><strong>−30</strong></td>
+</tr>
+<tr>
+<td>Convention (C)</td>
+<td>1</td>
+<td>0</td>
+<td>−1</td>
+</tr>
+<tr>
+<td>Error (E)</td>
+<td>4</td>
+<td>0</td>
+<td>−4</td>
+</tr>
+<tr>
+<td>Refactoring (R)</td>
+<td>2</td>
+<td>0</td>
+<td>−2</td>
+</tr>
+<tr>
+<td>Warning (W)</td>
+<td>25</td>
+<td>2</td>
+<td>−23</td>
+</tr>
+</tbody>
+</table>
+<p>The two remaining findings are the intentional <code>TODO</code>s for the unimplemented
+<code>fold</code>/<code>smoosh</code> modes.</p>
+<p><strong>Answers:</strong></p>
+<ul>
+<li><strong>Did the score improve?</strong> Yes, from 8.98 to 9.96.</li>
+<li><strong>Which categories improved most?</strong> Warnings (−23) and errors (−4). The
+  warning reduction came from the logging, encoding and dead-code fixes; the
+  errors were the Click false positive plus the now-fixed structural issues.</li>
+<li><strong>Did any new warnings appear?</strong> No. The two remaining findings are the same
+  intentional TODOs present in the baseline.</li>
+<li><strong>Does the numerical improvement reflect the quality improvement?</strong> Largely,
+  but not perfectly. Most of the score came from mechanical fixes (logging
+  style, <code>pass</code> removal, unused imports) that are easy and low-risk. The single
+  most important change — the M1 exception-hierarchy bug — was worth far more
+  than its contribution to the score, and the highest-risk manual finding (M3,
+  the repository walk) is <strong>not</strong> reflected in the score at all because Pylint
+  cannot measure it. A high score is therefore evidence of hygiene, not proof
+  of good design.</li>
+</ul>
+<h2 id="11-static-analysis-vs-human-review">11. Static analysis vs human review</h2>
+<ol>
+<li><strong>What Pylint detects well.</strong> Mechanical, rule-based issues: unused imports,
+   redundant <code>pass</code>, missing encodings, eager logging, unnecessary <code>elif</code>,
+   shadowed names and overly long functions. These are objective and reliably
+   actionable.</li>
+<li><strong>What required human judgment.</strong> The duplicate <code>AnalysisError</code> (M1) is
+   syntactically clean — Pylint saw nothing wrong — yet it silently broke error
+   handling. The inconsistent configuration defaults (M2), the dead parameter
+   (M4), the misused dataclass (M5) and above all the performance problem (M3)
+   were only visible when reading for <em>intent</em>, not syntax.</li>
+<li><strong>False positive / not worth fixing.</strong> The 4 × <code>E1120</code> reports are a known
+   Click false positive. The 2 <code>fixme</code> notes are legitimate tracked debt and
+   should not be removed merely to raise the score.</li>
+<li><strong>Can a high score hide poor design?</strong> Yes. Before this work the project
+   already scored 8.98 while containing a real error-handling defect (M1) and a
+   performance problem (M3). The score measures style compliance, not
+   correctness or architecture.</li>
+<li><strong>Should static analysis replace human review?</strong> Neither replacement nor
+   occasional use — it should <strong>complement</strong> review. Tools cheaply and
+   consistently remove mechanical defects so that human reviewers can spend
+   their attention on design, correctness and intent, which is where the
+   expensive defects live.</li>
+</ol>
+<h2 id="12-git-history">12. Git history</h2>
+<p>The work is split into meaningful commits rather than one final commit:</p>
+<pre><code class="language-text">ded64af Add regression tests for refactored modules
+b02932d Clean up imports, lazy logging, encodings and composition dispatch
+7089e9a Consolidate configuration defaults and remove dead helpers
+e8ded7a Decompose repository analysis into focused helpers
+57110a5 Unify exception hierarchy and remove redundant pass statements
+c738e64 Add project-specific Pylint configuration
+bc26c2f Record baseline Pylint analysis before changes
+c343dfc Baseline before static analysis
+9ea6335 increment version            (upstream baseline)
+</code></pre>
+<hr />
+<h2 id="appendix-a-complete-initial-pylint-output">Appendix A — Complete initial Pylint output</h2>
+<pre><code class="language-text">************* Module smoosh
+src/smoosh/__init__.py:24:4: W0107: Unnecessary pass statement (unnecessary-pass)
+src/smoosh/__init__.py:30:4: W0107: Unnecessary pass statement (unnecessary-pass)
+src/smoosh/__init__.py:36:4: W0107: Unnecessary pass statement (unnecessary-pass)
+src/smoosh/__init__.py:42:4: W0107: Unnecessary pass statement (unnecessary-pass)
+************* Module smoosh.cli
+src/smoosh/cli.py:87:16: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+src/smoosh/cli.py:106:4: E1120: No value for argument 'target' in function call (no-value-for-parameter)
+src/smoosh/cli.py:106:4: E1120: No value for argument 'mode' in function call (no-value-for-parameter)
+src/smoosh/cli.py:106:4: E1120: No value for argument 'output' in function call (no-value-for-parameter)
+src/smoosh/cli.py:106:4: E1120: No value for argument 'force_cat' in function call (no-value-for-parameter)
+************* Module smoosh.utils.path_resolver
+src/smoosh/utils/path_resolver.py:69:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+************* Module smoosh.utils.logger
+src/smoosh/utils/logger.py:26:4: W0621: Redefining name 'logger' from outer scope (line 55) (redefined-outer-name)
+src/smoosh/utils/logger.py:48:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src/smoosh/utils/logger.py:49:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+************* Module smoosh.utils.config
+src/smoosh/utils/config.py:114:17: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+src/smoosh/utils/config.py:3:0: W0611: Unused import os (unused-import)
+************* Module smoosh.composer.concatenator
+src/smoosh/composer/concatenator.py:147:5: W0511: TODO: Implement fold mode composition (fixme)
+src/smoosh/composer/concatenator.py:163:5: W0511: TODO: Implement smoosh mode composition (fixme)
+src/smoosh/composer/concatenator.py:14:4: W0107: Unnecessary pass statement (unnecessary-pass)
+src/smoosh/composer/concatenator.py:52:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src/smoosh/composer/concatenator.py:102:4: R1705: Unnecessary &quot;elif&quot; after &quot;return&quot;, remove the leading &quot;el&quot; from &quot;elif&quot; (no-else-return)
+************* Module smoosh.composer.formatter
+src/smoosh/composer/formatter.py:14:4: W0107: Unnecessary pass statement (unnecessary-pass)
+************* Module smoosh.analyzer.tree
+src/smoosh/analyzer/tree.py:3:0: W0611: Unused import os (unused-import)
+************* Module smoosh.analyzer.repository
+src/smoosh/analyzer/repository.py:35:8: C0415: Import outside toplevel (tree.generate_tree) (import-outside-toplevel)
+src/smoosh/analyzer/repository.py:40:0: R0914: Too many local variables (19/15) (too-many-locals)
+src/smoosh/analyzer/repository.py:69:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src/smoosh/analyzer/repository.py:72:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src/smoosh/analyzer/repository.py:117:19: W0718: Catching too general exception Exception (broad-exception-caught)
+src/smoosh/analyzer/repository.py:118:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src/smoosh/analyzer/repository.py:148:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src/smoosh/analyzer/repository.py:149:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+src/smoosh/analyzer/repository.py:156:4: W0107: Unnecessary pass statement (unnecessary-pass)
+src/smoosh/analyzer/repository.py:3:0: W0611: Unused import os (unused-import)
+
+------------------------------------------------------------------
+Your code has been rated at 8.98/10 (previous run: 8.98/10, +0.00)
+</code></pre>
+<h2 id="appendix-b-complete-final-pylint-output">Appendix B — Complete final Pylint output</h2>
+<pre><code class="language-text">************* Module smoosh.composer.concatenator
+src/smoosh/composer/concatenator.py:150:5: W0511: TODO: Implement fold mode composition (fixme)
+src/smoosh/composer/concatenator.py:166:5: W0511: TODO: Implement smoosh mode composition (fixme)
+
+------------------------------------------------------------------
+Your code has been rated at 9.96/10 (previous run: 9.96/10, +0.00)
+</code></pre></body></html>

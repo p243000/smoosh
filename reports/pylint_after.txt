@@ -1,0 +1,7 @@
+************* Module smoosh.composer.concatenator
+src/smoosh/composer/concatenator.py:150:5: W0511: TODO: Implement fold mode composition (fixme)
+src/smoosh/composer/concatenator.py:166:5: W0511: TODO: Implement smoosh mode composition (fixme)
+
+------------------------------------------------------------------
+Your code has been rated at 9.96/10 (previous run: 9.96/10, +0.00)
+
