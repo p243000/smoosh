@@ -3,7 +3,7 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Set, Union
+from typing import List, Optional, Set, Tuple, Union
 
 from .. import AnalysisError
 from ..custom_types import FileInfo
@@ -38,6 +38,112 @@ class RepositoryInfo:
         return generate_tree(str(self.root), self.files)
 
 
+def _resolve_root(input_path: Path) -> Tuple[Path, Optional[Path]]:
+    """Resolve the directory to analyse and the enclosing git root, if any.
+
+    Args:
+    ----
+        input_path: Path supplied by the caller
+
+    Returns:
+    -------
+        Tuple of (directory to walk, git root or None)
+
+    """
+    git_root = find_git_root(input_path)
+    if git_root and git_root == input_path:
+        logger.info("Git repository root detected at %s", input_path)
+        return git_root, git_root
+
+    logger.info("Processing directory at %s", input_path)
+    return input_path, git_root
+
+
+def _collect_ignore_patterns(
+    config: ConfigDict, git_root: Optional[Path], root_path: Path, force_cat: bool
+) -> Set[str]:
+    """Build the set of ignore patterns to apply while walking the repository.
+
+    Args:
+    ----
+        config: Configuration dictionary
+        git_root: Git root path if one was detected
+        root_path: Directory being analysed
+        force_cat: Whether concatenation was forced by the caller
+
+    Returns:
+    -------
+        Set of gitignore-style patterns, always including ``.git/``
+
+    """
+    patterns: Set[str] = set()
+    if config["gitignore"]["respect"] and not force_cat:
+        gitignore_root = git_root if git_root else root_path
+        patterns = get_gitignore_patterns(str(gitignore_root))
+
+    # Always exclude the .git directory
+    patterns.add(".git/")
+    return patterns
+
+
+def _build_file_info(file_path: Path, root_path: Path) -> FileInfo:
+    """Create a :class:`FileInfo` record for a single file.
+
+    Args:
+    ----
+        file_path: Absolute path to the file
+        root_path: Repository root used to compute the relative path
+
+    Returns:
+    -------
+        Populated FileInfo record
+
+    """
+    return FileInfo(
+        path=file_path,
+        relative_path=file_path.relative_to(root_path),
+        size_mb=get_file_size_mb(file_path),
+        is_python=file_path.suffix == ".py",
+    )
+
+
+def _collect_files(
+    root_path: Path, ignore_patterns: Set[str], max_size_mb: Optional[float]
+) -> Tuple[List[FileInfo], float, int]:
+    """Walk the repository and return file records plus aggregate statistics.
+
+    Args:
+    ----
+        root_path: Directory being analysed
+        ignore_patterns: Patterns describing paths to skip
+        max_size_mb: Maximum file size to include, or None for no limit
+
+    Returns:
+    -------
+        Tuple of (files sorted by relative path, total size in MB,
+        number of Python files)
+
+    """
+    files: List[FileInfo] = []
+    total_size_mb = 0.0
+    python_files_count = 0
+
+    for file_path in walk_repository(str(root_path), ignore_patterns, max_size_mb):
+        try:
+            file_info = _build_file_info(file_path, root_path)
+        except (OSError, ValueError) as e:
+            logger.warning("Error processing file %s: %s", file_path, e)
+            continue
+
+        files.append(file_info)
+        total_size_mb += file_info.size_mb
+        if file_info.is_python:
+            python_files_count += 1
+
+    files.sort(key=lambda f: str(f.relative_path))
+    return files, total_size_mb, python_files_count
+
+
 def analyze_repository(
     path: PathLike, config: ConfigDict, force_cat: bool = False
 ) -> RepositoryInfo:
@@ -59,79 +165,27 @@ def analyze_repository(
 
     """
     input_path = Path(str(path))
-
-    # Determine whether to use git root or provided path
-    git_root = find_git_root(input_path)
-    is_git_root = bool(git_root and git_root == input_path)
-
-    # Use git root only if the provided path is the repo root
-    root_path = input_path  # Default to input path
-    if is_git_root and git_root:
-        logger.info(f"Git repository root detected at {input_path}")
-        root_path = git_root
-    else:
-        logger.info(f"Processing directory at {input_path}")
+    root_path, git_root = _resolve_root(input_path)
 
     try:
-        # Get gitignore patterns if respect_gitignore is enabled
-        gitignore_patterns: Set[str] = set()
-        if config["gitignore"]["respect"] and not force_cat:
-            # Still get gitignore from git root if available for pattern matching
-            gitignore_root = git_root if git_root else root_path
-            # Convert Path to str for gitignore pattern retrieval
-            gitignore_patterns = get_gitignore_patterns(str(gitignore_root))
-
-        # Always exclude the .git directory
-        gitignore_patterns.add(".git/")
-
-        # Get size limit from config
+        ignore_patterns = _collect_ignore_patterns(config, git_root, root_path, force_cat)
         max_size_mb: Optional[float] = (
             None if force_cat else config["output"]["size_limits"]["file_max_mb"]
         )
-
-        # Collect file information
-        files: List[FileInfo] = []
-        total_size_mb: float = 0.0
-        python_files_count: int = 0
-
-        # Convert root_path to str for walk_repository
-        for file_path in walk_repository(str(root_path), gitignore_patterns, max_size_mb):
-            try:
-                # Get file info
-                size_mb = get_file_size_mb(file_path)
-                is_python = file_path.suffix == ".py"
-                # We know root_path is a Path here
-                relative_path = file_path.relative_to(root_path)
-
-                file_info = FileInfo(
-                    path=file_path,
-                    relative_path=relative_path,
-                    size_mb=size_mb,
-                    is_python=is_python,
-                )
-
-                files.append(file_info)
-                total_size_mb += size_mb
-                if is_python:
-                    python_files_count += 1
-
-            except Exception as e:
-                logger.warning(f"Error processing file {file_path}: {e}")
-
-        # Sort files by relative path for consistent ordering
-        files.sort(key=lambda f: str(f.relative_path))
-
-        return RepositoryInfo(
-            root=root_path,  # root_path is now guaranteed to be a Path
-            files=files,
-            gitignore_patterns=gitignore_patterns,
-            total_size_mb=total_size_mb,
-            python_files_count=python_files_count,
-            total_files_count=len(files),
+        files, total_size_mb, python_files_count = _collect_files(
+            root_path, ignore_patterns, max_size_mb
         )
-
     except OSError as e:
         raise AnalysisError(f"Failed to analyze repository: {e}") from e
+
+    return RepositoryInfo(
+        root=root_path,
+        files=files,
+        gitignore_patterns=ignore_patterns,
+        total_size_mb=total_size_mb,
+        python_files_count=python_files_count,
+        total_files_count=len(files),
+    )
 
 
 def load_file_contents(repo_info: RepositoryInfo) -> None:
